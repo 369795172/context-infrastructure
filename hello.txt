@@ -1,6 +1,0 @@
-Hello from Marvin Context Infrastructure.
-
-This file is a small, explicit handshake marker for automation and humans:
-Symphony / agents can verify checkout and write paths without touching runtime code.
-
-Welcome — context stays observable.
