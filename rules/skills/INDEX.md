@@ -4,6 +4,7 @@
 
 - **想使用某个能力** → 浏览下方分类，找到对应的 skill 文件
 - **想添加新 skill** → 参考现有文件格式，添加到对应分类
+- **想安装更多工具型能力** → 看 [`../../docs/SKILL_ECOSYSTEM.md`](../../docs/SKILL_ECOSYSTEM.md)，那里列出可单独安装的 public skill repo
 
 ---
 
@@ -21,9 +22,13 @@
 - ⚙️ Send Email — 需要 Gmail App Password
 - ⚙️ Delayed Execution — 适配你自己的工具路径
 
+### Tier 3: 独立 public skill repos（按需安装）
+- 🔧 Tavily、Google Docs、Outlook、Resend、OpenCode、Process Launcher、PPTX、Typefully、Stripe 等能力见 [`docs/SKILL_ECOSYSTEM.md`](../../docs/SKILL_ECOSYSTEM.md)
+
 ### 说明
 ✅ = 最多 15 分钟即可使用
 ⚙️ = 需要额外配置，不配不影响核心功能
+🔧 = 独立 repo，按需安装到你的 workspace
 
 ---
 
@@ -62,43 +67,33 @@
 - [知识飞轮设计模式](./workflow_knowledge_flywheel.md) — 笨数据+笨方法+笨模型=精知识
 - [视频下载与语音识别工作流](./workflow_bilibili_whisper_transcription.md) — Bilibili/YouTube 视频处理
 - [延时执行技能](./delayed_execution.md) ⚙️ — 定时任务：sleep + 后台执行，或 OpenCode API 智能任务
+- [项目脚手架与重整](./project_scaffold.md) ✅ — 把散装目录升级成标准项目结构：`docs/`、`src/`、`scripts/`、`tests/`、`AGENTS.md` 与独立 git
 
 ### BestPractice（最佳实践）
 
 通用的最佳实践和经验教训。
 
 - [AI 编程核心方法论](./bestpractice_ai_programming_mindset.md) ✅ — 70%问题、成功标准、可验证性
+- [Skill 写作指南（Meta-Skill）](./bestpractice_skill_writing.md) ✅ — 创建或重写 skill 时使用，强调结果确定性、验收标准和边界条件
 - [API Key 管理与调用](./bestpractice_api_key_management_1password_cli.md) ✅ — 使用 1Password CLI 安全管理密钥
 - [面试评估框架](./bestpractice_interview_evaluation.md) ✅ — Trait > Skill、AI 作弊识别、技术深度探测
 - [Markdown 转 HTML 最佳实践](./bestpractice_markdown_html_conversion.md) ✅
+- [PDF 转 Markdown](./bestpractice_pdf_to_markdown.md) ✅ — 默认用 Docling，避免 PDF 场景下 MarkItDown / PyMuPDF4LLM / Marker 的质量或许可问题
 - [时间敏感信息验证](./bestpractice_temporal_info_verification.md) ✅ — 验证可能超出 knowledge cutoff 的信息
 - [分阶段工作法](./bestpractice_staged_approach.md) ✅ — 隔离-处理-验证闭环，破坏性操作前 Dry Run
 - [多 Agent 并行 analysis](./bestpractice_multi_agent_analysis.md) ✅ — Topic 分割 50% 重叠、交叉验证
+- [GUI 自动化方法论](./bestpractice_gui_automation.md) ✅ — 把没有 API 的界面转化为可编程接口
 - [AI 辅助调试诊断](./bestpractice_ai_debugging_diagnosis.md) ✅ — "代码改不好"的根因诊断决策树
 - [AI 产品设计原则](./bestpractice_ai_product_design.md) ✅ — 线性聊天 vs 知识工作、感知规则解耦
+- [产品/技术决策逆向工程](./bestpractice_product_decision_analysis.md) ✅ — 从设计空间、约束和 trade-off 分析产品或技术决策
 
 ---
 
 ## 如何添加你自己的 Skill
 
-1. 参考现有 skill 文件的格式（元数据、核心说明、使用步骤、示例）
-2. 以 `<category>_<name>.md` 命名（例如 `workflow_my_process.md`、`bestpractice_my_insight.md`）
-3. 在 INDEX.md 对应分类下添加一行
+创建或重写 skill 前，先读 [`bestpractice_skill_writing.md`](./bestpractice_skill_writing.md)。它说明如何用目标、验收标准、可用资源和输出规格定义一个 skill，而不是把 skill 写成机械步骤清单。
 
-Skill 格式参考（最简版）：
-```markdown
-# Skill: 名称
-
-## When to Use
-什么情况下触发这个 skill
-
-## Prerequisites
-需要什么工具/配置
-
-## 步骤
-1. 步骤一
-2. 步骤二
-```
+文件命名建议采用 `<category>_<name>.md`，例如 `workflow_my_process.md`、`bestpractice_my_insight.md`。写完后在本 INDEX 的对应分类下添加入口，确保后续 agent 能找到。
 
 ## Progressive Disclosure
 
