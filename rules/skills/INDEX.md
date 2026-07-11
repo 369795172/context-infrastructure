@@ -75,6 +75,7 @@
 
 通用的最佳实践和经验教训。
 
+- [内部文档排版与自适应视觉组件规范](./bestpractice_internal_visuals.md) ✅ — 内部 Memo/RFC/周报的自适应 HTML 卡片、主题变量、暗色模式兼容与视觉组件规范
 - [AI 编程核心方法论](./bestpractice_ai_programming_mindset.md) ✅ — 70%问题、成功标准、可验证性
 - [Skill 写作指南（Meta-Skill）](./bestpractice_skill_writing.md) ✅ — 创建或重写 skill 时使用，强调结果确定性、验收标准和边界条件
 - [API Key 管理与调用](./bestpractice_api_key_management_1password_cli.md) ✅ — 使用 1Password CLI 安全管理密钥
