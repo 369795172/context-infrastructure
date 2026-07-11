@@ -44,7 +44,6 @@ graph TD
     A -->|厚上下文: 用户本人/协作者/AI Agent/工作流| C[Internal-facing]
 
     B -->|1. 加载外部写作工作流| D(rules/skills/workflow_external_writing.md)
-    B -->|2. 加载外部长文微观文风手册| E(rules/skills/bestpractice_external_prose.md)
 
     C -->|1. 加载内部写作工作流| F(rules/skills/workflow_internal_writing.md)
     C -->|2. 加载内部视觉组件规范| G(rules/skills/bestpractice_internal_visuals.md)
