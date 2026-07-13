@@ -66,7 +66,7 @@
 
 ### 2c. 安装外部 public skill repo
 
-`rules/skills/` 里的内容是 starter set，不需要把所有能力都复制进来。需要更完整的能力时，先看 [`docs/SKILL_ECOSYSTEM.md`](docs/SKILL_ECOSYSTEM.md)。那里列出了一组独立维护的 public skill repo，例如 Tavily、Google Docs、Outlook、Resend、OpenCode、Process Launcher、PPTX、Typefully 和 Stripe。
+`rules/skills/` 里的内容是 starter set，不需要把所有能力都复制进来。需要更完整的能力时，先看 [`docs/SKILL_ECOSYSTEM.md`](docs/SKILL_ECOSYSTEM.md)。那里列出了一组独立维护的 public skill repo，例如 Tavily、Google Docs、Google Maps、Outlook、Resend、OpenCode、Process Launcher、PPTX、Typefully 和 Stripe。
 
 安装时，把目标 repo URL 交给你的 AI agent，让它从当前 workspace 的 `AGENTS.md` / `WORKSPACE.md` 出发，只暴露一个 root skill。通用技术 contract 留在 public repo；联系人 alias、本地路径、endpoint、token 和业务上下文留在本地 overlay。
 
@@ -134,8 +134,8 @@ python3 periodic_jobs/ai_heartbeat/src/v0/observer.py 2024-01-15
 
 当你的 `contexts/` 目录积累了足够多内容后，语义搜索让你能按意思而非关键词检索历史记录。
 
-**需要**：LLM Studio（本地）或 OpenAI API key  
-**配置**：参见 `rules/skills/semantic_search.md`
+**需要**：任意 OpenAI-compatible embedding endpoint（本地或云端）  
+**配置**：安装 ecosystem [semantic-search-skill](https://github.com/grapeot/semantic-search-skill)
 
 ### 分享报告到 Web（⚙️）
 
