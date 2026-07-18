@@ -32,18 +32,18 @@ Don't ask permission. Just do it.
 
 **重要：遇到"怎么做 X"时，先查 skill 再查系统工具。** 搜索顺序：(1) 下方速查表 → (2) `rules/skills/INDEX.md` → (3) 系统工具。
 
-**需要执行某项任务** → 先查 `rules/skills/INDEX.md` 找到对应的 skill  
+**需要执行某项任务** → 先查 `rules/skills/INDEX.md` 找到对应的 skill
 **想添加新能力** → 参考现有 skill 格式，更新 INDEX.md
 
 ### 常用 Skill 速查（以 INDEX.md 为准）
 
-**深度调研任务** → `rules/skills/workflow_deep_research_survey.md`  
-- 初步扫描 → 分割维度 → 多 Agent 并行 → 交叉验证 → 写报告  
+**深度调研任务** → `rules/skills/workflow_deep_research_survey.md`
+- 初步扫描 → 分割维度 → 多 Agent 并行 → 交叉验证 → 写报告
 - 输出：`contexts/survey_sessions/`
 
-**调用后台 Agent / 并行 Subagent** → `rules/skills/workflow_parallel_subagents.md`  
-- 何时拆分任务、什么时候不要拆、如何并行派出多个 subagent  
-- 准备调用多个 `functions.task` 前，先把这个 skill 读一遍再执行  
+**调用后台 Agent / 并行 Subagent** → `rules/skills/workflow_parallel_subagents.md`
+- 何时拆分任务、什么时候不要拆、如何并行派出多个 subagent
+- 准备调用多个 `functions.task` 前，先把这个 skill 读一遍再执行
 - 当前并行方式是 `multi_tool_use.parallel`；不要使用旧 `run_in_background` / `background_output` 写法
 
 ## Axioms（公理）
