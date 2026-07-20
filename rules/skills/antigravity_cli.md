@@ -5,7 +5,7 @@
 - 类型：API Guide
 - 适用场景：用 Antigravity 订阅额度调用 Gemini agent，替代 Gemini API sub-agent；自动化写作、重写、审稿和文件处理
 - 命令：`agy`
-- 已验证版本：1.1.2（2026-07-14）
+- 已验证版本：1.1.4（2026-07-20）
 
 ## 核心判断
 
@@ -45,7 +45,7 @@ agy --help
 agy models
 ```
 
-`agy` 1.1.2 没有独立 `login` 子命令。`agy models` 或首次 `agy --print` 会尝试从系统 keyring 静默取得 Antigravity 凭证。如果机器尚未登录，先在 Antigravity App / IDE 中完成 Google 登录，再重试 `agy models`。不要用 `GEMINI_API_KEY` 兜底，因为那会绕回 API 计费路径，不再是本 skill 要验证的订阅通道。
+`agy` 1.1.4 没有独立 `login` 子命令。`agy models` 或首次 `agy --print` 会尝试从系统 keyring 静默取得 Antigravity 凭证。如果机器尚未登录，先在 Antigravity App / IDE 中完成 Google 登录，再重试 `agy models`。不要用 `GEMINI_API_KEY` 兜底，因为那会绕回 API 计费路径，不再是本 skill 要验证的订阅通道。
 
 初始化完成标准：`command -v agy` 返回有效路径，`agy --version` 正常退出，`agy models` 能列出模型。只有三项都通过后，才运行正式文件式任务。
 
@@ -82,6 +82,10 @@ agy --print \
   2> "/absolute/path/to/agy_task_stderr.txt"
 ```
 
+`--print` / `-p` 是顶层 flag，不是子命令。AGY 1.1.4 没有 `agy run`，也没有 `--trust`、`--format` 或 `--output-events`。不要套用其他 agent CLI 的调用形状；`agy run ...` 会进入错误的交互路径，在无 TTY 的 subprocess 中可能报 Bubble Tea `/dev/tty` 错误或挂起。事件和诊断只写入 `--log-file`。
+
+AGY 1.1.4 修复了 headless `--print` 未遵守持久化 `settings.json` policy 的问题。现在 permission、file access、sandbox mode、auto-execution 和 artifact review 等持久设置都会影响非交互运行。正式调用前除检查命令行 flags 外，还必须审阅全局与项目级 AGY settings；不要假设 `--print` 是脱离持久配置的纯净执行环境。
+
 调用方还应设置约 610 秒的外层 process timeout。`--print-timeout 10m` 是 AGY 内部等待上限；外层多留约 10 秒用于进程退出和日志落盘。
 
 `--dangerously-skip-permissions` 只允许与 `--sandbox` 同时使用，并且只在上述最小 trusted scratch workspace 中使用。它用于避免非交互模式卡在文件写入确认，不代表允许 agent 扩大任务范围。任务文件必须明确写出唯一输出路径和“不要修改其他文件”。
@@ -106,11 +110,11 @@ agy models
 
 写作工作流默认 `Gemini 3.5 Flash (High)`。需要更强推理且订阅配额允许时，才显式改用 `Gemini 3.1 Pro (High)`。不要依赖交互式 `/model` 的持久设置；正式调用始终传 `--model`。
 
-AGY 1.1.2 的 print mode 会在模型名无效时返回非零退出码并列出可用模型。不要静默 fallback。
+AGY 1.1.4 的 print mode 会在模型名无效时返回非零退出码并列出可用模型。不要静默 fallback。
 
 ## 进度与卡死判断
 
-AGY 1.1.2 没有 `--json` 或 `--output-format stream-json`。不要编造 JSON mode，也不要把 plain stdout 包装成伪事件流。
+AGY 1.1.4 没有 `--json` 或 `--output-format stream-json`。不要编造 JSON mode，也不要把 plain stdout 包装成伪事件流。
 
 当前可观测性来自 `--log-file`。日志每行自带时间戳，能看到：
 
@@ -199,6 +203,13 @@ IC-3 完成后，主线程按 `workflow_external_writing.md` 执行 Manager Voic
 - 使用 `Gemini 3.5 Flash (High)` 完成约 2,000 字中文 memo 重写并保留全部 17 个 URL。
 - 首轮重写暴露出技术术语误译、逐句换行和第一人称回流；加入不可改词表、自然段约束后显著改善。
 - 用全新 AGY conversation 完成独立 prose QA，保留 Top 5 排序、四段结构、两个深挖候选和全部 17 个 URL，并修正夸大表述与术语漂移。因此 external-facing 成品仍默认保留独立 IC-3，不能把一次 AGY 重写视为免检成稿。
+
+2026-07-20 在 macOS arm64、AGY 1.1.4 上复核 CLI interface 与 headless 路径：
+
+- 官方 GitHub latest release 与本机 `agy --version` 均为 1.1.4。
+- `agy --help` 确认 headless 入口仍为顶层 `--print` / `-p`，不存在 `run` 子命令或 JSON event flags。
+- `agy --print` 可在非 TTY subprocess 中完成调用，并将 stdout、stderr 与 `--log-file` 分别重定向。
+- 1.1.4 release 明确修复 headless run 对持久化 `settings.json` policy 的继承；后续升级复核必须同时检查 CLI help 与 release notes，不能只替换版本号。
 
 ## 官方来源
 

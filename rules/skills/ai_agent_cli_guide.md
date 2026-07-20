@@ -89,7 +89,7 @@ Antigravity 自动化使用独立的 `agy` 命令，不使用 `agy-ide chat`。�
 
 核心规则：prompt、结果、stdout、stderr、事件日志全部落盘；默认模型为 `Gemini 3.5 Flash (High)`；`--dangerously-skip-permissions` 必须与 `--sandbox` 同时使用；内部 timeout 为 10 分钟，外层约 610 秒。
 
-AGY 1.1.2 没有 `login` 子命令，也没有 JSON event stream。它从系统 keyring 复用 Antigravity App 或 IDE 的 Google 登录，进度检查使用带时间戳的 `--log-file`。成功必须同时满足退出码为 0、结果文件非空、硬约束通过且 stderr 无未处理错误。
+AGY 1.1.4 的 headless 入口是顶层 `agy --print`，不存在 `agy run`；它没有 `login` 子命令或 JSON event stream。CLI 从系统 keyring 复用 Antigravity App 或 IDE 的 Google 登录，进度检查使用带时间戳的 `--log-file`。1.1.4 会在 headless mode 继承持久化 `settings.json` policy，运行前必须一并审阅。成功必须同时满足退出码为 0、结果文件非空、硬约束通过且 stderr 无未处理错误。
 
 多阶段写作必须为每个阶段启动 fresh conversation，并使用独立的 prompt、result、stdout、stderr 和 events 文件。
 
