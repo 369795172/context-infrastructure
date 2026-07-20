@@ -3,6 +3,7 @@
 ## 2026-07-20
 
 - Updated the Antigravity CLI guide and quick reference for AGY 1.1.4: documented the top-level `agy --print` interface, rejected nonexistent `agy run` and JSON event flags, and added the new headless inheritance of persisted `settings.json` policies.
+- Added `ai-session-profanity-rate` to the public ecosystem for cached sub-agent profanity-unit analysis over local AI-session user messages, with private local artifacts and redacted JSON/chart outputs.
 
 ## 2026-07-16
 
