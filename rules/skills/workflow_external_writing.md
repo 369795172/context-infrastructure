@@ -5,7 +5,7 @@
 - **类型**: Workflow
 - **适用场景**: 将已验证的调研素材转化为 external-facing 分析文章、公开 survey report 或外部课程/客户内容。
 - **前置依赖**: [深度调研工作流](./workflow_deep_research_survey.md) Phase 1-3 的产出，或等价的已验证素材。
-- **最后更新**: 2026-07-16
+- **最后更新**: 2026-07-20
 
 ## 1. 目标与产出路由
 
@@ -102,8 +102,8 @@ Brief 还必须包含一份 **Voice Route**。它不替代提纲，而是防止 
 | 主线程 Manager | 主模型 | `tmp/<session_slug>/writing_brief.md` | 调研、事实核查、thesis gate、reasoning architecture、Voice Route、概念规划、最终配图和验收 |
 | IC-1 结构稿 | AGY / `Gemini 3.5 Flash (High)` | `tmp/<session_slug>/article_structural.md` | 按 claim dependency graph 写齐论点、证据、概念、链接和图片；标明 reader question 与 concrete consequence，不追求发布级 prose |
 | IC-2 自然介绍重写 | fresh AGY / `Gemini 3.5 Flash (High)` | `tmp/<session_slug>/article.md` | 读 brief、结构稿和同渠道校准样本，只继承 claim graph 与硬约束，从 Voice Route 重新讲述全文 |
-| IC-3 独立 Voice QA | fresh AGY / `Gemini 3.5 Flash (High)` | `tmp/<session_slug>/article_qa.md`、`prose_qa.md` | 先判断整篇声线和认知舒适度，再审改 prose；不改变 claim、事实、证据、数字、URL、图片或结构意图 |
-| Manager Voice Pass | 主模型 | `tmp/<session_slug>/article_final.md`、`voice_audit.md` | 清除翻译腔和叙述距离问题，完成不变量与 new-claim audit；不改变 brief 授权的事实、结构或结论强度 |
+| IC-3 独立 Voice QA / Final Writer | fresh AGY / `Gemini 3.5 Flash (High)` | `tmp/<session_slug>/article_qa.md`、`prose_qa.md` | 先判断整篇声线和认知舒适度，再审改 prose；不改变 claim、事实、证据、数字、URL、图片或结构意图。IC-3 是最终 prose authority |
+| Manager Content Acceptance | 主模型 | `tmp/<session_slug>/article_final.md`、`content_audit.md` | 以 `article_qa.md` 为不可替换的 base document，完成不变量与 new-claim audit；只允许不超过正文 5% 的词级事实修正，不自行重写 prose |
 
 IC-1、IC-2、IC-3 分别使用新的 `agy --print` conversation，不带 `--continue` 或 `--conversation`。每阶段独立保存 `agy_icN_prompt.md`、结果文件、`agy_icN_stdout.txt`、`agy_icN_stderr.txt` 和 `agy_icN_events.log`。默认内部 timeout 10 分钟，外层约 610 秒，并同时启用 sandbox 与非交互权限确认。
 
@@ -133,13 +133,17 @@ IC-3 可以拆句、合句、换词、改局部段落、调整段落断点和小
 
 需要新增事实、改变 thesis、重排主要章节、删除读者不需要操作的分析框架或重做证据链时，IC-3 不自行修复，在 `prose_qa.md` 标记 `BLOCKER`。主线程回到事实核查、brief 或 IC-1。
 
-`prose_qa.md` 必须分别记录 comprehension gate 与 cognitive comfort gate，并包含整篇声线判定、主要修改、至少 4 组真实 before/after、标题冷读与复述测试、保留不动的数字/URL/图片数量、过度口语化扫描和 blocker 状态。两项 gate 都通过且没有 blocker，`article_qa.md` 才能进入 Manager Voice Pass。
+`prose_qa.md` 必须分别记录 comprehension gate 与 cognitive comfort gate，并包含整篇声线判定、主要修改、至少 4 组真实 before/after、标题冷读与复述测试、保留不动的数字/URL/图片数量、过度口语化扫描和 blocker 状态。两项 gate 都通过且没有 blocker，`article_qa.md` 才能进入 Manager Content Acceptance。
 
-### 5.3 Manager Voice Pass
+### 5.3 Manager Content Acceptance
 
-最终 prose 质量不能外包给 IC-3 自我认证。主线程逐段清除四类问题：凭空创造的角色名称；把普通动作写成机构语言；从系统视角描述结果；用抽象名词代替读者实际失去的东西。`voice_audit.md` 记录所有实际改动的原句、问题和改写，不能只写“已消除翻译腔”。
+外部文章的最终 prose authority 属于 Antigravity / Gemini。主线程对内容正确性和交付验收负责，但审查权不等于写作权。`article_qa.md` 是不可替换的 base document；最终正文至少 95% 必须直接来自它或后续 AGY final-integration 稿。按非空白字符 diff 计算，主线程直接触碰的正文不得超过 5%；删除、移动和替换都计入改动。按用户明确要求修改标题时，标题不计入正文比例。
 
-Voice Pass 后机械比较 `article_qa.md` 与 `article_final.md`：数字一致，URL 数量和目标一致，图片引用一致，H2 顺序一致，diff 没有新增、删除或加强 brief 授权的 claim。还要对照 brief 和 research packet 做 new-claim audit；IC-3 为了亲切而新增、但没有证据支持的专名、因果关系、性能判断和绝对化词必须删除或降回已验证口径。这类未经授权的新增内容不受 claim 不变量保护。
+主线程只允许四类 word-level surgical changes：修正人名、机构、日期、数字、URL、代码标识符和官方产品名；把效果保证、因果结论或绝对化词降回 source pack 支持的强度；修正明确的错字、语病、重复词和标点错误；删除一句中来源不支持的局部事实，但不得借此重写所在段落。禁止挑选段落后拼接、另写一版、改变段落顺序，以及重写段落入口、转场或结尾。
+
+需要段落级或结构级改写时，主线程写出逐条 `content_audit.md`，标明问题句、证据边界与允许口径，再交给全新的 AGY conversation 做 targeted final integration。Prompt 必须要求未标记段落原样保留。AGY 返回后，主线程只做 read-only acceptance 和上述词级修正；再次发现大改需求时继续退回 AGY，不得为结束流程自行成稿。
+
+完成后机械比较 AGY 最终稿与 `article_final.md`：正文保留率至少 95%，数字一致，URL 数量和目标一致，图片引用一致，H2 顺序一致，且 diff 没有新增、删除或加强 claim。`content_audit.md` 记录所有主线程直接修改的原句、原因和替换词，并报告正文保留率。
 
 ## 6. 配图
 
@@ -147,7 +151,7 @@ Voice Pass 后机械比较 `article_qa.md` 与 `article_final.md`：数字一致
 
 ## 7. Post-writing Scans
 
-IC-3 完成语义审查并经过 Manager Voice Pass 后，主线程对 `article_final.md` 运行确定性回归扫描。Manager 在 Voice Pass 权限内修正机械文风命中；若问题需要 IC-3 重写，则重新生成 `article_qa.md`，随后必须重跑 Manager Voice Pass 和全部扫描：
+IC-3 完成语义审查并经过 Manager Content Acceptance 后，主线程对 `article_final.md` 运行确定性回归扫描。命中项只能按第 5.3 节做词级修正；需要段落级改写时交回 fresh AGY final integration，随后重新执行内容验收和全部扫描：
 
 ```bash
 # 破折号
@@ -181,7 +185,7 @@ rg -n '(^|[。！？]\s*)当.{8,60}(时|时候)[，,].{0,40}(就|会|成为|变�
 rg -n '可[\p{Han}]{1,6}[、，,]\s*可[\p{Han}]{1,6}([、，,]\s*可[\p{Han}]{1,6})?' <file>
 ```
 
-概念引入、教材声、认知舒适度和过度口语化都不能由正则完成。IC-3 必须在 `prose_qa.md` 明确记录。主线程分别比较 `article.md` → `article_qa.md` 和 `article_qa.md` → `article_final.md` 的数字、URL、图片数量和目标地址，并检查 H2 顺序、证据段和结论强度没有越权改变。最后再检查新增标题、否定句和解释句：读者是否从正文已经知道为什么此刻要解释；删章后是否仍有未兑现的开头承诺、结尾问题、链接或配图。
+概念引入、教材声、认知舒适度和过度口语化都不能由正则完成。IC-3 必须在 `prose_qa.md` 明确记录。主线程分别比较 `article.md` → `article_qa.md` 和 AGY 最终稿 → `article_final.md` 的数字、URL、图片数量和目标地址，并检查正文保留率至少 95%、H2 顺序不变、证据段和结论强度没有越权改变。若主线程直接改动超过 5%，必须恢复以 AGY 稿为 base，并把问题退回 AGY。
 
 ## 8. Final Read Gate
 

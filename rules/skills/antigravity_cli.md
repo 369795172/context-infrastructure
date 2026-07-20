@@ -174,9 +174,9 @@ Do not modify any other file.
 
 - IC-1 只读 brief，写结构稿。
 - IC-2 读 brief + 结构稿 + 3-5 篇同渠道已发布成稿校准样本，完整重写。prompt 必须说明只继承结构稿的 claim、证据、URL、数字与 H2 顺序，不继承原句和段落入口；按 brief 的 Voice Route 从空白页面重写。目标是“懂技术的人向聪明朋友自然介绍自己的发现”，同时避开教材声和表演式口语两个极端。
-- IC-3 读 brief + IC-2 成品 + IC-2 使用的正向样本与双端负例 + 文风规则，先做整篇声线判定。若开头、多个 H2 入口和结尾仍像课程讲义，必须整篇重写 prose，不能只换词；随后检查是否为亲切感擅自加入比喻、俚语、绝对化结论或 source pack 没有的新事实。输出 `article_qa.md` 候选稿，不把自己的 prose 直接视为最终稿。
+- IC-3 读 brief + IC-2 成品 + IC-2 使用的正向样本与双端负例 + 文风规则，先做整篇声线判定。若开头、多个 H2 入口和结尾仍像课程讲义，必须整篇重写 prose，不能只换词；随后检查是否为亲切感擅自加入比喻、俚语、绝对化结论或 source pack 没有的新事实。输出 `article_qa.md` 和 `prose_qa.md`；IC-3 是 external-facing workflow 的最终 prose authority。
 
-IC-3 完成后，主线程按 `workflow_external_writing.md` 执行 Manager Voice Pass：读取 `article_qa.md`，写 `article_final.md` 和带真实前后对照的 `translationese_audit.md`。这一步不再调用 AGY；最终 prose 责任由主线程保留。
+IC-3 完成后，主线程按 `workflow_external_writing.md` 执行 Manager Content Acceptance：以 `article_qa.md` 为不可替换的 base document，只做事实、专名、数字和 claim 强度的 word-level surgical changes，直接改动不得超过正文非空白字符的 5%。需要段落级或结构级修改时，必须把 `content_audit.md` 交给全新的 AGY conversation 做 targeted final integration；主线程不得挑段落、拼接或自行重写全文。
 
 每一轮使用独立的 prompt、result、stdout、stderr 和 events 文件。文件名应包含阶段，例如：
 
