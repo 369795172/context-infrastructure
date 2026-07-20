@@ -66,7 +66,7 @@
 - [公开 Consensus Net Income 审计工作流](./workflow_public_consensus_net_income_audit.md) — 用 MarketScreener 等公开网页审计一组股票的 FY/CY consensus net income，区分 direct/derived、current/baseline/revision，并要求逐链接 QA。触发词："consensus net income"、"MarketScreener 审计"、"FY2026E 净利润共识"
 - [科研论文调研与写作工作流](./workflow_research_paper_survey_writing.md) — 把科研论文转化为面向技术从业者的分析文章。核心：按读者重要性排序（不按论文章节）、三层分离（paper claim / 外部验证 / 我们的判断）、强制生态位分析（bottleneck / 替代路径 / stack 层级 / 相邻影响）。触发词："分析这篇论文"、"写论文解读"、"paper analysis"
 - [External-Facing Thesis Mining](./workflow_external_thesis_mining.md) ✅ — 位于调研与成文之间的判断层；结合 Axioms、Thesis Catalog、历史语料、独立候选和 fresh critique，输出 `PROCEED` 或 `DO_NOT_WRITE_YET`
-- [外部写作工作流](./workflow_external_writing.md) ✅ — 将通过 thesis gate 的素材转化为 external-facing 分析文章。AGY IC-3 / final integration 负责至少 95% 的最终 prose；主线程只做内容验收与不超过 5% 的词级修正
+- [外部写作工作流](./workflow_external_writing.md) ✅ — 将通过 thesis gate 的素材转化为 external-facing 分析文章；root 文件先声明不可覆盖合同和阶段地图，再按阶段加载四个 reference。IC-3 负责 100% 最终 prose，主线程只读验收，归档与通过验收的 AGY 候选 byte-for-byte 一致
 - [内部写作工作流](./workflow_internal_writing.md) ✅ — 面向用户本人、共享上下文协作者和未来 AI agent 的内部文档写作。核心是低决策摩擦：结论前置、skimmable、inline evidence、方便跳转和验证，必要时用图表降低认知负担。
 - [认知画像提取工作流](./workflow_cognitive_profile_extraction.md) — 从非结构化对话数据提取可预测的认知公理
   - 适用：群聊/Slack/Discord/邮件/播客转录等任意对话数据
