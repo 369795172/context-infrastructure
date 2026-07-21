@@ -47,7 +47,7 @@ topic 价值较高、判断不确定性较大时，按 [并行 Subagent 工作�
 
 - **证据与机制 reader**：从最强证据反推可成立的机制判断，优先发现归因越界和 scope 过大。
 - **作者连续性与增量 reader**：对照 Axioms、历史文章和 correction 经验，寻找尚未写过的判断。
-- **陌生读者与反命题 reader**：AGY CLI / `Gemini 3.5 Flash (High)`。完整任务写入 `agy_reader_prompt.md`，使用独立 `agy --print` conversation，判断读者为什么在意、提出最强替代解释，并检查候选是否只是业内常识换句话说。result、stdout、stderr 和 events 分别落盘。
+- **陌生读者与反命题 reader**：AGY CLI / `gemini-3.6-flash-high`。完整任务写入 `agy_reader_prompt.md`，使用独立 `agy --print` conversation，判断读者为什么在意、提出最强替代解释，并检查候选是否只是业内常识换句话说。result、stdout、stderr 和 events 分别落盘。
 
 每个 reader 输出 2-4 个候选到各自文件。候选统一包含：Thesis、Reader delta、推理链、最强证据、最强反方、适用边界与 falsifier、与历史写作的关系、现在是否应成文。reader 可以明确判断没有合格 thesis，禁止凑数。
 
