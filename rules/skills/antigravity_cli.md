@@ -5,7 +5,7 @@
 - 类型：API Guide
 - 适用场景：用 Antigravity 订阅额度调用 Gemini agent，替代 Gemini API sub-agent；自动化写作、重写、审稿和文件处理
 - 命令：`agy`
-- 已验证版本：1.1.4（2026-07-20）
+- 已验证版本：1.1.5（2026-07-21）
 
 ## 核心判断
 
@@ -45,7 +45,7 @@ agy --help
 agy models
 ```
 
-`agy` 1.1.4 没有独立 `login` 子命令。`agy models` 或首次 `agy --print` 会尝试从系统 keyring 静默取得 Antigravity 凭证。如果机器尚未登录，先在 Antigravity App / IDE 中完成 Google 登录，再重试 `agy models`。不要用 `GEMINI_API_KEY` 兜底，因为那会绕回 API 计费路径，不再是本 skill 要验证的订阅通道。
+`agy` 1.1.5 没有独立 `login` 子命令。`agy models` 或首次 `agy --print` 会尝试从系统 keyring 静默取得 Antigravity 凭证。如果机器尚未登录，先在 Antigravity App / IDE 中完成 Google 登录，再重试 `agy models`。不要用 `GEMINI_API_KEY` 兜底，因为那会绕回 API 计费路径，不再是本 skill 要验证的订阅通道。
 
 初始化完成标准：`command -v agy` 返回有效路径，`agy --version` 正常退出，`agy models` 能列出模型。只有三项都通过后，才运行正式文件式任务。
 
@@ -67,12 +67,12 @@ prompt、结果和运行记录可能包含任务正文、文件路径、账号�
 
 ## 标准命令
 
-中文写作和 prose QA 默认用 `Gemini 3.5 Flash (High)`：
+中文写作和 prose QA 默认用 `gemini-3.6-flash-high`（Gemini 3.6 Flash High）：
 
 ```bash
 agy --print \
   "Read the complete task from /absolute/path/to/agy_task_prompt.md and follow it exactly." \
-  --model "Gemini 3.5 Flash (High)" \
+  --model "gemini-3.6-flash-high" \
   --mode accept-edits \
   --sandbox \
   --dangerously-skip-permissions \
@@ -82,9 +82,9 @@ agy --print \
   2> "/absolute/path/to/agy_task_stderr.txt"
 ```
 
-`--print` / `-p` 是顶层 flag，不是子命令。AGY 1.1.4 没有 `agy run`，也没有 `--trust`、`--format` 或 `--output-events`。不要套用其他 agent CLI 的调用形状；`agy run ...` 会进入错误的交互路径，在无 TTY 的 subprocess 中可能报 Bubble Tea `/dev/tty` 错误或挂起。事件和诊断只写入 `--log-file`。
+`--print` / `-p` 是顶层 flag，不是子命令。AGY 1.1.5 没有 `agy run`，也没有 `--trust`、`--format` 或 `--output-events`。不要套用其他 agent CLI 的调用形状；`agy run ...` 会进入错误的交互路径，在无 TTY 的 subprocess 中可能报 Bubble Tea `/dev/tty` 错误或挂起。事件和诊断只写入 `--log-file`。
 
-AGY 1.1.4 修复了 headless `--print` 未遵守持久化 `settings.json` policy 的问题。现在 permission、file access、sandbox mode、auto-execution 和 artifact review 等持久设置都会影响非交互运行。正式调用前除检查命令行 flags 外，还必须审阅全局与项目级 AGY settings；不要假设 `--print` 是脱离持久配置的纯净执行环境。
+AGY 1.1.5 延续了对持久化 `settings.json` policy 的 headless `--print` 支持。permission、file access、sandbox mode、auto-execution 和 artifact review 等持久设置都会影响非交互运行。正式调用前除检查命令行 flags 外，还必须审阅全局与项目级 AGY settings；不要假设 `--print` 是脱离持久配置的纯净执行环境。
 
 调用方还应设置约 610 秒的外层 process timeout。`--print-timeout 10m` 是 AGY 内部等待上限；外层多留约 10 秒用于进程退出和日志落盘。
 
@@ -100,21 +100,21 @@ agy --help
 agy models
 ```
 
-已验证可用模型包括：
+2026-07-21 在 AGY 1.1.5 中验证可用模型包括：
 
-- `Gemini 3.5 Flash (Low)`
-- `Gemini 3.5 Flash (Medium)`
-- `Gemini 3.5 Flash (High)`
-- `Gemini 3.1 Pro (Low)`
-- `Gemini 3.1 Pro (High)`
+- `gemini-3.6-flash-low`（Gemini 3.6 Flash Low）
+- `gemini-3.6-flash-medium`（Gemini 3.6 Flash Medium）
+- `gemini-3.6-flash-high`（Gemini 3.6 Flash High）
+- `gemini-3.5-flash-low`、`gemini-3.5-flash-medium`、`gemini-3.5-flash-high`
+- `gemini-3.1-pro-low`、`gemini-3.1-pro-high`
 
-写作工作流默认 `Gemini 3.5 Flash (High)`。需要更强推理且订阅配额允许时，才显式改用 `Gemini 3.1 Pro (High)`。不要依赖交互式 `/model` 的持久设置；正式调用始终传 `--model`。
+写作工作流默认 `gemini-3.6-flash-high`。需要更强推理且订阅配额允许时，才显式改用 `gemini-3.1-pro-high`。不要依赖交互式 `/model` 的持久设置；正式调用始终传 `--model`。
 
-AGY 1.1.4 的 print mode 会在模型名无效时返回非零退出码并列出可用模型。不要静默 fallback。
+AGY 1.1.5 的 print mode 会在模型名无效时返回非零退出码并列出可用模型。不要静默 fallback。
 
 ## 进度与卡死判断
 
-AGY 1.1.4 没有 `--json` 或 `--output-format stream-json`。不要编造 JSON mode，也不要把 plain stdout 包装成伪事件流。
+AGY 1.1.5 没有 `--json` 或 `--output-format stream-json`。不要编造 JSON mode，也不要把 plain stdout 包装成伪事件流。
 
 当前可观测性来自 `--log-file`。日志每行自带时间戳，能看到：
 
@@ -210,6 +210,12 @@ IC-3 是 external-facing workflow 的唯一 final prose authority。主线程对
 - `agy --help` 确认 headless 入口仍为顶层 `--print` / `-p`，不存在 `run` 子命令或 JSON event flags。
 - `agy --print` 可在非 TTY subprocess 中完成调用，并将 stdout、stderr 与 `--log-file` 分别重定向。
 - 1.1.4 release 明确修复 headless run 对持久化 `settings.json` policy 的继承；后续升级复核必须同时检查 CLI help 与 release notes，不能只替换版本号。
+
+2026-07-21 在 macOS arm64、AGY 1.1.5 上完成 Gemini 3.6 Flash High smoke test：
+
+- `agy models` 列出 `gemini-3.6-flash-low`、`gemini-3.6-flash-medium` 和 `gemini-3.6-flash-high`。
+- 使用 `gemini-3.6-flash-high` 在最小 sandbox workspace 中读取落盘 prompt、写入指定结果文件并回读验证。
+- 进程成功退出，结果内容精确，stderr 为空；事件日志确认模型解析为 `Gemini 3.6 Flash (High)`。
 
 ## 官方来源
 
