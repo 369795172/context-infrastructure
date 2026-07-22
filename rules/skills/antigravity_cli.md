@@ -140,49 +140,55 @@ AGY 1.1.5 没有 `--json` 或 `--output-format stream-json`。不要编造 JSON 
 
 ## 写作任务模板
 
-任务文件至少包含：
+External writing 的 Writer 不读取完整 workflow、`COMMUNICATION.md` 或 `bestpractice_external_prose.md`。Main Agent 先把本题要求压缩成 task packet，再让 AGY 只负责完整成文。
+
+Round 2 候选任务文件至少包含：
 
 ```markdown
 # Task
 
 Read these files completely:
-1. `/absolute/path/to/writing_brief.md`
-2. `/absolute/path/to/source_draft.md`
-3. `/absolute/path/to/COMMUNICATION.md`
-4. `/absolute/path/to/bestpractice_external_prose.md`
+1. `/absolute/path/to/source_contract.md`
+2. `/absolute/path/to/writing_brief.md`
+3. `/absolute/path/to/voice_contract.md`
+4. `/absolute/path/to/article_source.md`
 
 Write the complete result to:
 `/absolute/path/to/result.md`
 
 Do not modify any other file.
 
-## Hard invariants
+## Task
 
-- Preserve the thesis, facts, numbers, URLs, image references, and H2 order.
-- Preserve product names and project-specific terms exactly as listed below.
-- Do not translate identifiers such as `reset card`, model names, API names, or code symbols.
+- Write one complete external-facing Chinese article from a blank page.
+- Use only facts, scenes, causal claims, and boundaries present in `source_contract.md` and `article_source.md`.
+- Preserve the thesis, claim strength, numbers, URLs, image references, and immutable terms.
+- Follow `voice_contract.md`; do not output an audit, explanation, invariant count, or PASS statement.
 - Use normal Chinese paragraphs. Do not put every sentence on its own line.
-- Short sentences are a tendency, not a reason to create telegraph prose.
-- Read the output once after writing and verify every invariant.
 ```
 
-写作 brief 应提供一份“不可改词表”，列出产品名、模型名、容易误译的术语和必须逐字保留的标签。AGY 实测会主动翻译 `Oracle`、`reset card`、`system of record` 等词；没有词表时容易改变事实口径。
+`source_contract.md` 应提供不可改词表，列出产品名、模型名、容易误译的术语和必须逐字保留的标签。AGY 实测会主动翻译 `Oracle`、`reset card`、`system of record` 等词；没有词表时容易改变事实口径。
 
-## Fresh Context 与多轮写作
+## Fresh Context、并行候选与一次返工
 
-每次不带 `--continue` 或 `--conversation` 的 `agy --print` 都创建新 conversation。外部写作的 IC-1、IC-2、IC-3 应分别调用一次新的 `agy --print`，不要复用 conversation：
+每次不带 `--continue` 或 `--conversation` 的 `agy --print` 都创建新 conversation。External writing 使用两类 AGY 调用：
 
-- IC-1 只读 brief，写结构稿。
-- IC-2 读 brief + 结构稿 + 3-5 篇同渠道已发布成稿校准样本，完整重写。prompt 必须说明只继承结构稿的 claim、证据、URL、数字与 H2 顺序，不继承原句和段落入口；按 brief 的 Voice Route 从空白页面重写。目标是“懂技术的人向聪明朋友自然介绍自己的发现”，同时避开教材声和表演式口语两个极端。
-- IC-3 读 brief + IC-2 成品 + IC-2 使用的正向样本与双端负例 + 文风规则，先做整篇声线判定。若开头、多个 H2 入口和结尾仍像课程讲义，必须整篇重写 prose，不能只换词；随后检查是否为亲切感擅自加入比喻、俚语、绝对化结论或 source pack 没有的新事实。输出完整 `article_final_vN.md` 候选和 `prose_qa_vN.md`。
+- **Round 2 parallel candidates**：默认用两个全新 conversation 从同一个 task packet 分别生成 `candidate_a.md` 和 `candidate_b.md`。它们互不读取，也不串行改写。两个调用可以并行执行。
+- **Round 4 optional revision**：只有 Main Agent 冷读验收给出 `RETRY_PROSE` 时，才启动一个全新 conversation。它读取选中候选、原始 task packet 和不超过 3-5 项的 `revision_delta.md`，输出完整修订稿。
 
-IC-3 是 external-facing workflow 的唯一 final prose authority。主线程对候选只有只读审计权，不能修改任何字符；事实、专名、数字、URL、路径、Markdown 或 prose 问题都写入 `content_audit_vN.md`，再交给全新的 AGY conversation 从空白页输出下一版完整候选。最终归档必须直接与通过验收的 AGY 候选 byte-for-byte 一致。具体收敛上限和 gate 见 `workflow_external_writing.md`。
+AGY Writer 不写 QA，也不是 PASS authority。Main Agent 必须直接读取候选正文，用确定性工具核对数字、URL、图片和结构，再对照 source contract 判断事实与 voice。Round 4 最多一次；仍有非 surgical blocker 时回到 Main Agent 的上游工件或向用户报告，不自动启动更多 AGY conversation。
+
+Round 3 的验收结论写入 `acceptance_audit.md`，只能是 `ACCEPT`、`RETRY_PROSE` 或 `RETURN_TO_ROUND_1`。Writer 的 stdout 只证明进程完成，不参与选择或 PASS 判断。
+
+Round 4 的任务文件必须额外读取选中候选和 `revision_delta.md`。`revision_delta.md` 只列 3-5 个最高影响 blocker、原文位置与正确方向，不得重新附加整份 workflow 或 prose taxonomy。Round 4 输出完整修订稿，不输出 QA。
+
+验收通过后，Main Agent 可做有记录的 surgical completion，包括错字、标点、Markdown、专有名词及可由 source contract 唯一确定的单句局部修复。所有修改写入 `completion_edits.md`；不得借此重排结构或整段重写。
 
 每一轮使用独立的 prompt、result、stdout、stderr 和 events 文件。文件名应包含阶段，例如：
 
-- `agy_ic1_prompt.md` / `agy_ic1_events.log`
-- `agy_ic2_prompt.md` / `agy_ic2_events.log`
-- `agy_ic3_prompt.md` / `agy_ic3_events.log`
+- `agy_candidate_a_prompt.md` / `agy_candidate_a_events.log`
+- `agy_candidate_b_prompt.md` / `agy_candidate_b_events.log`
+- `agy_revision_prompt.md` / `agy_revision_events.log`
 
 ## 已知限制
 
@@ -202,7 +208,7 @@ IC-3 是 external-facing workflow 的唯一 final prose authority。主线程对
 - 事件日志包含带时间戳的 auth、模型请求、文件工具和 shutdown 记录。
 - 使用 `Gemini 3.5 Flash (High)` 完成约 2,000 字中文 memo 重写并保留全部 17 个 URL。
 - 首轮重写暴露出技术术语误译、逐句换行和第一人称回流；加入不可改词表、自然段约束后显著改善。
-- 用全新 AGY conversation 完成独立 prose QA，保留 Top 5 排序、四段结构、两个深挖候选和全部 17 个 URL，并修正夸大表述与术语漂移。因此 external-facing 成品仍默认保留独立 IC-3，不能把一次 AGY 重写视为免检成稿。
+- 当时曾用全新 AGY conversation 执行独立 prose QA，并成功保留 Top 5 排序、四段结构、两个深挖候选和全部 17 个 URL。后续多次写作表明，Writer 在同一次 completion 中自写自审并不能可靠判定 PASS；现行流程已改为 Main Agent 冷读验收和最多一次 fresh AGY 返工。一次 AGY 重写仍不能视为免检成稿。
 
 2026-07-20 在 macOS arm64、AGY 1.1.4 上复核 CLI interface 与 headless 路径：
 
