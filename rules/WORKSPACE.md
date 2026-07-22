@@ -32,3 +32,4 @@
 
 <!-- 随着你的项目增长，在这里添加活跃项目的快捷路由 -->
 <!-- 格式：- `project-name` → `adhoc_jobs/project_name/` (说明) -->
+<!-- 示例：- `weather monitor` / `weather_monitor` → `adhoc_jobs/weather_monitor/`（家庭气象数据采集与告警） -->
