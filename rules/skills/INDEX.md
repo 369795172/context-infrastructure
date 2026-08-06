@@ -105,6 +105,7 @@
 - [产品/技术决策逆向工程](./bestpractice_product_decision_analysis.md) ✅ — 从设计空间、约束和 trade-off 分析产品或技术决策
 - [iOS Test Acceleration](./ios_test_acceleration.md) — iOS unit/UI test iteration tips：sequential `xcodebuild`、`build-for-testing` + `test-without-building`、fixed simulator UUID、focused `-only-testing`、fixture launch arguments 和 `.xcresult` inspection
 - [Playwright E2E 测试方法论](https://github.com/grapeot/playwright-test-skill) 🔗 — CDP step-by-step debugging CLI + E2E methodology。独立 public repo，CLI: `pw-test`。触发词："Playwright E2E"、"CDP debugging"、"SSO login test"、"browser step debugging"
+- [Playwright Ajax Capture](./playwright_ajax_capture.md) — 在已登录的 CDP 浏览器 session 里拦截 fetch/XHR，逆向 web app 的 internal API contract（URL/method/payload/auth），再用 plain requests 复现，绕过 Admin API 限制。触发词："抓 ajax"、"逆向 internal API"、"browser session 调 API"、"不用 admin key"
 
 ---
 
