@@ -3,7 +3,7 @@
 ## 元数据
 - 类型: API Guide
 - 适用场景: 用 CLI Agent 构建自动化流水线、AI 调用 AI
-- 最后更新: 2026-03-10
+- 最后更新: 2026-07-21
 
 ---
 
@@ -20,13 +20,13 @@
 
 ## 工具速查
 
-| 维度 | Claude Code | Codex CLI | OpenCode |
-|------|-------------|-----------|----------|
-| **开源** | ❌ | ❌ | ✅ 100% |
-| **模型绑定** | 仅 Claude | 仅 OpenAI | Provider-agnostic（xAI, Anthropic, OpenAI, Google 等） |
-| **CLI 非交互** | `claude --print` | `codex exec` | `opencode serve` + `opencode run --attach`（两步） |
-| **Web API** | ❌ | ❌ | ✅ 完整 |
-| **推荐场景** | 深度推理 | 自动化 | 多模型对比、自动化 + 可视化 |
+| 维度 | Claude Code | Codex CLI | OpenCode | Antigravity CLI |
+|------|-------------|-----------|----------|-----------------|
+| **开源** | ❌ | ❌ | ✅ 100% | ❌ |
+| **模型绑定** | 仅 Claude | 仅 OpenAI | Provider-agnostic（xAI, Anthropic, OpenAI, Google 等） | Antigravity 订阅内模型 |
+| **CLI 非交互** | `claude --print` | `codex exec` | `opencode serve` + `opencode run --attach`（两步） | `agy --print` |
+| **Web API** | ❌ | ❌ | ✅ 完整 | ❌ |
+| **推荐场景** | 深度推理 | 自动化 | 多模型对比、自动化 + 可视化 | 用订阅额度调用 Gemini agent |
 
 ---
 
@@ -83,17 +83,117 @@ subprocess.run([
 
 ---
 
+## Antigravity CLI 快速参考
+
+Antigravity 自动化使用独立的 `agy` 命令，不使用 `agy-ide chat`。完整安装、认证和执行契约见 [Antigravity CLI 文件式调用](./antigravity_cli.md)。
+
+核心规则：prompt、结果、stdout、stderr、事件日志全部落盘；默认模型为 `gemini-3.6-flash-high`；`--dangerously-skip-permissions` 必须与 `--sandbox` 同时使用；内部 timeout 为 10 分钟，外层约 610 秒。
+
+AGY 1.1.5 的 headless 入口是顶层 `agy --print`，不存在 `agy run`；它没有 `login` 子命令或 JSON event stream。CLI 从系统 keyring 复用 Antigravity App 或 IDE 的 Google 登录，进度检查使用带时间戳的 `--log-file`。它会在 headless mode 继承持久化 `settings.json` policy，运行前必须一并审阅。成功必须同时满足退出码为 0、结果文件非空、硬约束通过且 stderr 无未处理错误。
+
+多阶段写作必须为每个阶段启动 fresh conversation，并使用独立的 prompt、result、stdout、stderr 和 events 文件。
+
+---
+
 ## Codex CLI 快速参考
 
-**基本命令**: `codex exec [options] "prompt"`
+> 基于 Codex CLI 0.144.x 实测校对（2026-07-21）。0.1.x 系列改动很大，旧版的 `--full-auto` 已废弃，sandbox/approval 拆成独立参数，并新增了结构化输出与 last-message 落盘能力。
 
-**关键参数**:
-- `-m, --model`: `gpt-5.2` (推荐)
-- `-c model_reasoning_effort`: `low` (翻译) / `medium` (常规) / `high` (深度重构)
-- `--full-auto`: 自动接受所有操作
-- `--json`: JSON 输出格式
+**基本命令**: `codex exec [options] "prompt"`（`exec` 可简写为 `e`）。prompt 也可用 `-` 从 stdin 读取；stdin 与位置参数同时给出时，stdin 会作为 `<stdin>` block 追加。
 
-**推荐**: 简单任务用 `low`，复杂任务用 `high`
+**核心参数**:
+- `-m, --model`: 指定模型。当前生成为 GPT-5.x Codex 系列；不再是旧文档里的 `gpt-5.2`。
+- `-c model_reasoning_effort=<level>`: `low`（翻译/格式转换）/ `medium`（常规）/ `high`（深度重构）。这是通过 `-c` 覆盖 config，不是独立 flag。
+- `-s, --sandbox <mode>`: `read-only` / `workspace-write` / `danger-full-access`。**取代了旧的 `--full-auto`**。要让 agent 写文件用 `workspace-write`；只读推理用 `read-only`。
+- `-a, --ask-for-approval <policy>`: `untrusted` / `on-request` / `never`。自动化场景配 `never`，让执行失败直接回流给模型而不阻塞。
+- `--skip-git-repo-check`: 在非 git 目录运行（在临时目录必备）。
+- `--ephemeral`: 不把 session 落盘（一次性调用推荐，避免 rollout 文件堆积）。
+- `-C, --cd <dir>`: 指定 agent 工作根目录；`--add-dir <dir>` 追加可写目录。
+- `--color never`: 关闭 ANSI，方便解析 stdout。
+
+**自动化关键：结构化输出与结果落盘**
+
+这是相对旧版最大的实用改进，取代"在 prompt 里恳求模型只输出 JSON"的脆弱做法：
+
+- `-o, --output-last-message <file>`: 把 agent 最终一条消息**干净地**写入文件（无事件噪声）。文件响应模式的首选出口。
+- `--output-schema <file>`: 传入 JSON Schema 文件，强制最终响应符合该 schema。配合 `-o` 可直接拿到校验过的 JSON。实测有效：
+
+```bash
+# schema.json: {"type":"object","properties":{"answer":{"type":"integer"}},"required":["answer"],"additionalProperties":false}
+codex exec --skip-git-repo-check --sandbox read-only --color never \
+  -c model_reasoning_effort=low \
+  --output-schema schema.json \
+  -o out.json \
+  "What is 17 times 3?"
+# out.json => {"answer":51}
+```
+
+**JSONL 事件流（`--json`）**
+
+`--json` 输出 JSONL 事件流，schema 已重构。当前事件类型：
+
+```
+{"type":"thread.started","thread_id":"..."}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"最终答案在这里"}}
+{"type":"turn.completed","usage":{"input_tokens":...,"output_tokens":...}}
+```
+
+最终答案在 `item.type == "agent_message"` 的 `text` 字段；工具调用则是 `command_execution` / `file_change` 等 item 类型。监控进度按 item 逐条解析即可。注意 stderr 偶发 `failed to renew cache TTL` 警告，不影响结果，解析时忽略。
+
+**其他新增子命令（自动化相关）**:
+- `codex exec resume <session_id>` 或 `--last`: 续跑历史 session。
+- `codex review [--uncommitted | --base <branch>]`: 非交互代码审查（也有 `codex exec review`）。
+- `codex sandbox <command...>`: 直接在 Codex 的 seatbelt sandbox 里跑任意命令。
+- `codex doctor`: 诊断安装、auth、runtime 健康（排查 CLI 问题第一步）。
+
+**推荐**: 简单任务用 `low` + `read-only`，需写文件用 `workspace-write`，复杂重构用 `high`。生产自动化统一走 `--output-schema` + `-o` 拿结构化结果，比解析 stdout 稳。
+
+### 使用第三方 model provider（Ollama Cloud 等）
+
+Codex 默认走 ChatGPT 登录调 GPT-5.x，但也支持任意 OpenAI-compatible 的第三方 provider。这在以下场景有用：想用更便宜或更快的 model（如 Ollama Cloud 的 GLM-5.2、DeepSeek-V4-Flash）、想让数据离开 OpenAI 生态、或想用本地模型。
+
+**原理**：在 `~/.codex/config.toml`（或 profile 文件）里定义 `[model_providers.<id>]` 段，指定 `base_url`、鉴权方式和 wire API。然后用 `model_provider = "<id>"` + `model = "<model_id>"` 路由过去。provider id 不能用保留名 `openai` / `ollama` / `lmstudio`。
+
+**Profile 方式（推荐，不影响主配置）**：
+
+```toml
+# ~/.codex/ollama-cloud.config.toml
+model = "glm-5.2"
+model_provider = "ollama_cloud"
+
+[model_providers.ollama_cloud]
+name = "Ollama Cloud"
+base_url = "https://ollama.com/v1"
+env_key = "OLLAMA_API_KEY"
+```
+
+调用时加 `--profile ollama-cloud`，codex 会把这份配置 overlay 到主 config 之上：
+
+```bash
+OLLAMA_API_KEY=<your_key> codex exec --full-auto --profile ollama-cloud \
+  -s danger-full-access -c model_reasoning_effort=low "你的 prompt"
+```
+
+**关键点**：
+
+- `env_key` 指向环境变量名，codex 运行时从该变量读 API key。不要把 key 写进 config 文件。
+- `base_url` 必须是 OpenAI-compatible endpoint（`/v1` 结尾）。Ollama Cloud 是 `https://ollama.com/v1`。
+- `wire_api` 默认 `chat`（Chat Completions）。如果 provider 支持 Responses API，可加 `wire_api = "responses"`。
+- 自定义 provider 不能用 `--oss` / `--local-provider`（那两个只给本地 ollama/lmstudio 用）。
+- 第三方 model 的 tool calling 能力参差。实测 Ollama Cloud GLM-5.2 能正常用 codex 的 read/bash/write 工具完成文件处理任务，但 reasoning 较长时 token 控制不如 GPT-5.x 精准，简单任务建议 `model_reasoning_effort=low`。
+- codex 启动时会刷新 model 列表，部分 provider 返回格式不完全匹配（如 Ollama Cloud 返回 `{"data":[...]}` 而非 `{"models":[...]}`），会打 ERROR 日志但不影响实际推理，可忽略。
+
+**鉴权方式**：
+- `env_key = "XXX"`：从环境变量读 API key（最常用）。
+- `requires_openai_auth = true`：复用 ChatGPT/API key 登录（适合 OpenAI 代理）。
+- 不设任何 auth：无鉴权（适合本地模型）。
+- `[model_providers.<id>.auth]` + `command`：从外部命令获取 bearer token（适合需要动态 token 的场景）。
+
+**实测验证清单**（接入新 provider 后建议跑一遍）：
+1. 最小连通性：`请只回复 OK` 确认 provider 路由通。
+2. 工具调用：`写一个 Python hello world 并运行` 确认 read/bash/write 工具链正常。
+3. 文件处理：让 agent 读写一个真实文件，确认 sandbox 内 IO 正常（特别注意 workspace 外路径会被 sandbox 拦截）。
 
 ---
 
@@ -160,7 +260,7 @@ opencode run \
 | xai | `grok-4-1-fast-non-reasoning` | Grok 4.1 非推理，$0.20/1M input |
 | anthropic | `claude-opus-4-6` | Claude 深度推理 |
 | anthropic | `claude-sonnet-4-6` | Claude 常规，性价比高 |
-| openai | `gpt-5.4` | GPT-5.4（需 Codex 插件） |
+| openai | `gpt-5.x` | GPT-5.x Codex 当前生成（需 Codex 插件） |
 
 ---
 
@@ -174,6 +274,8 @@ opencode run \
 > 3. 设置合理的推理强度（如翻译设为 `low`）
 > 4. 传递 Prompt 前清理空字符 (`.replace('\0', '')`)
 > 5. 对于 OpenCode，优先使用 Web Server API"
+
+上面的 JSON 流建议不适用于 Antigravity CLI。AGY 使用 `--log-file` 观察进度，并以指定结果文件作为唯一成品。
 
 ---
 
@@ -195,9 +297,9 @@ opencode run \
 
 | 任务类型 | Claude Code | Codex | OpenCode |
 |---------|-------------|-------|----------|
-| **翻译/格式转换** | Sonnet 4.6 | gpt-5.2 + low | *(你的轻量模型)* |
-| **常规开发** | Sonnet 4.6 | gpt-5.2 + medium | *(你的标准模型)* |
-| **深度推理/重构** | Opus 4.6 | gpt-5.2 + high | *(你的推理模型)* |
+| **翻译/格式转换** | Sonnet 4.6 | GPT-5.x Codex + low | *(你的轻量模型)* |
+| **常规开发** | Sonnet 4.6 | GPT-5.x Codex + medium | *(你的标准模型)* |
+| **深度推理/重构** | Opus 4.6 | GPT-5.x Codex + high | *(你的推理模型)* |
 
 ---
 

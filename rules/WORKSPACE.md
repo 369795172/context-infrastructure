@@ -13,6 +13,7 @@
 - 通用调研报告：`contexts/survey_sessions/`
 - 思考 / 复盘 / 方法论：`contexts/thought_review/`
 - 每日日志：`contexts/daily_records/`
+- AI 会话归档：`contexts/ai_sessions/<source>/`（使用 ai_session_export 生成；搜索流程见 `rules/skills/ai_session_search_archive.md`）
 
 ### 系统与规则
 - 可复用技术方案 / Skill：`rules/skills/`
@@ -31,3 +32,4 @@
 
 <!-- 随着你的项目增长，在这里添加活跃项目的快捷路由 -->
 <!-- 格式：- `project-name` → `adhoc_jobs/project_name/` (说明) -->
+<!-- 示例：- `weather monitor` / `weather_monitor` → `adhoc_jobs/weather_monitor/`（家庭气象数据采集与告警） -->
