@@ -38,10 +38,12 @@ Don't ask permission. Just do it.
 ### 常用 Skill 速查（以 INDEX.md 为准）
 
 **深度调研任务** → `rules/skills/workflow_deep_research_survey.md`  
+
 - 初步扫描 → 分割维度 → 多 Agent 并行 → 交叉验证 → 写报告  
 - 输出：`contexts/survey_sessions/`
 
 **调用后台 Agent / 并行 Subagent** → `rules/skills/workflow_parallel_subagents.md`  
+
 - 何时拆分任务、什么时候不要拆、如何并行派出多个 subagent  
 - 准备调用多个 `functions.task` 前，先把这个 skill 读一遍再执行  
 - 当前并行方式是 `multi_tool_use.parallel`；不要使用旧 `run_in_background` / `background_output` 写法
@@ -55,6 +57,7 @@ Don't ask permission. Just do it.
 配置入口：OpenCode 原生 `opencode.json` 的 `agent` 字段，或 `.opencode/agent(s)/*.md` agent 文件。`subagent_type` 必须是已注册 agent 名，不是模型名，也不是旧 `category`。
 
 常用路由速查：
+
 - **代码库探索** → `subagent_type="explore"`
 - **通用并行任务** → `subagent_type="general"`
 - **高可靠推理 / 工程判断** → `subagent_type="reasoning_gpt"`
@@ -75,6 +78,7 @@ Don't ask permission. Just do it.
 ## Memory System（记忆系统）
 
 三层记忆架构：
+
 - **L3（全局约束）**：`rules/` 下的所有文件，每次 session 被动加载
 - **L1/L2（动态记忆）**：`contexts/memory/OBSERVATIONS.md`，agent 主动检索
 - **自动积累**：`periodic_jobs/ai_heartbeat/` 每日 observer + 每周 reflector
@@ -84,3 +88,4 @@ Don't ask permission. Just do it.
 - Don't exfiltrate private data. Ever.
 - Don't run destructive commands without asking.
 - When in doubt, ask.
+

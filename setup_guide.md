@@ -85,6 +85,8 @@
 
 **价值**：让 AI 自动积累你的工作经验，越用越懂你。
 
+**Python 解释器（与 cron 一致）**：本 workspace 约定根目录虚拟环境为 **`.venv/`**。下文与 `docs/CRONTAB.md` 一律使用 **`.venv/bin/python`**，不要用裸 `python3`（易落到系统环境，缺依赖）。若你 fork 到使用 `venv/`（无点）的 monorepo（如 Rootgrove），以目标仓库的 `WORKSPACE.md` / `AGENTS.md` 为准。
+
 ### 3a. 理解三层架构
 
 ```
@@ -100,16 +102,16 @@ L3 你已经配置好了（Step 1）。L1/L2 需要设置 cron 自动运行。
 
 1. 确认本地 OpenCode Server 运行（或配置连接）
 2. 在 `periodic_jobs/ai_heartbeat/src/v0/` 检查 `opencode_client.py`（需要你自行补充，源码参考 OpenCode 文档）
-3. 测试连通性：`python3 observer.py --help`
+3. 测试连通性（在 workspace 根目录）：`.venv/bin/python periodic_jobs/ai_heartbeat/src/v0/observer.py --help`
 
 ### 3c. 配置 Cron
 
 ```bash
 # 每日 8:00 AM 运行 observer（扫描当日变化）
-0 8 * * * cd /path/to/your/workspace && python3 periodic_jobs/ai_heartbeat/src/v0/observer.py >> /tmp/observer.log 2>&1
+0 8 * * * cd /path/to/your/workspace && .venv/bin/python periodic_jobs/ai_heartbeat/src/v0/observer.py >> /tmp/observer.log 2>&1
 
 # 每周一 9:00 AM 运行 reflector（蒸馏和晋升）
-0 9 * * 1 cd /path/to/your/workspace && python3 periodic_jobs/ai_heartbeat/src/v0/reflector.py >> /tmp/reflector.log 2>&1
+0 9 * * 1 cd /path/to/your/workspace && .venv/bin/python periodic_jobs/ai_heartbeat/src/v0/reflector.py >> /tmp/reflector.log 2>&1
 ```
 
 调整路径和时间为你的实际情况。
@@ -119,7 +121,7 @@ L3 你已经配置好了（Step 1）。L1/L2 需要设置 cron 自动运行。
 运行一次 observer：
 
 ```bash
-python3 periodic_jobs/ai_heartbeat/src/v0/observer.py 2024-01-15
+cd /path/to/your/workspace && .venv/bin/python periodic_jobs/ai_heartbeat/src/v0/observer.py 2024-01-15
 ```
 
 查看 `contexts/memory/OBSERVATIONS.md` 是否有新条目写入。

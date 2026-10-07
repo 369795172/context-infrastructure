@@ -24,8 +24,9 @@
 - 临时一次性项目：`tmp_<name>/`
 
 ## Python 环境
-- 根目录 `.venv/` 为工作区级环境，用 `uv pip install` 管理依赖
+- 根目录 **`.venv/`** 为工作区级环境，用 `uv pip install` 管理依赖；运行脚本与 cron 请用 **`.venv/bin/python`**，与 `docs/CRONTAB.md` 一致，避免裸 `python3`。
 - 需要隔离时在 `adhoc_jobs/<project>/.venv/` 建独立环境
+- **Fork 提示**：若你将本模板并入 **Rootgrove** 等 monorepo，对方可能使用根目录 **`venv/`**（无点）与 **`./venv/bin/python`**；以目标仓库的 `WORKSPACE.md` / `AGENTS.md` 为准，勿混用目录名。
 
 ## 快速查询
 
