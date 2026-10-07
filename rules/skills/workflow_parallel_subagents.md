@@ -72,7 +72,9 @@ Subagent 的主要价值不是模拟人类团队，也不是把一个普通任�
 
 ### 2. 并行启动
 
-当前 OpenCode 环境的正确并行方式是：在同一条 assistant 消息里，用 `multi_tool_use.parallel` 包裹多个 `functions.task` 调用。单独连续调用多个 `task`，即使文字上说“并行”，实际也是串行。
+**⚠️ 当前 OpenCode 环境的正确并行方式是 `multi_tool_use.parallel` 包裹多个 `functions.task` 调用。** 不要使用旧文档里的 `mcp_task(run_in_background=True)`；当前工具没有 `run_in_background` 参数，也没有 `mcp_background_output` / `background_output` 取结果工具。
+
+必须在**同一条 assistant 消息**里一次性发出所有 subagent 调用。单独连续调用多个 `task`，即使文字上说“并行”，实际也是串行。
 
 ```json
 {
@@ -91,8 +93,18 @@ Subagent 的主要价值不是模拟人类团队，也不是把一个普通任�
       "recipient_name": "functions.task",
       "parameters": {
         "description": "独立体验",
-        "subagent_type": "cheap_glm",
+        "subagent_type": "general",
         "prompt": "搜索独立用户体验、社区讨论、GitHub issues，写入 tmp/<session>/tier3_independent.md",
+        "task_id": "",
+        "command": ""
+      }
+    },
+    {
+      "recipient_name": "functions.task",
+      "parameters": {
+        "description": "竞品对比",
+        "subagent_type": "general",
+        "prompt": "做竞品矩阵和 thesis verdict，写入 tmp/<session>/competitive_context.md",
         "task_id": "",
         "command": ""
       }
@@ -101,9 +113,15 @@ Subagent 的主要价值不是模拟人类团队，也不是把一个普通任�
 }
 ```
 
-`subagent_type` 是 OpenCode 原生 agent 名，不是模型名，也不是旧 `category`。OpenCode 会执行 `agent.get(subagent_type)`；找不到同名 agent 就报 `Unknown agent type`。
+工具层调用形式是 `multi_tool_use.parallel`，其中每一项是一个 `functions.task`。`subagent_type` 是 OpenCode 原生 agent 名，不是模型名，也不是旧 `category`。OpenCode 会执行 `agent.get(subagent_type)`；找不到同名 agent 就报 `Unknown agent type`。
 
-常用 `subagent_type`：
+内置 agent 与自定义 agent 的来源：
+
+- `general` / `explore` 是 OpenCode 源码内置 agent。
+- 其他命名 agent 来自 `~/.config/opencode/opencode.json`、项目 `opencode.json`，或 `.opencode/agent(s)/*.md`。
+- `provider/model` 只是底层模型入口。要能被 `task` 调用，必须包成 agent，例如 `writer_deepseek -> deepseek/deepseek-v4-pro`。
+
+当前常用 `subagent_type`：
 
 | subagent_type | 适用场景 |
 |---|---|
@@ -112,9 +130,10 @@ Subagent 的主要价值不是模拟人类团队，也不是把一个普通任�
 | `reasoning_gpt` | 高可靠推理、工程判断、方案设计、复杂代码审查 |
 | `writer_deepseek` | 中文写作、改稿、风格润色、最终 prose polishing；避免高隐私材料 |
 | `cheap_glm` | 低成本初筛、分类、提纲、轻量调研和非关键总结 |
-| `private_ds4` | 本地 DS4 路线，适合隐私敏感、本机执行优先、低成本草稿 |
+| `private_ds4` | 本地 ds4-server，适合隐私敏感、本机执行优先、低成本草稿 |
 | `ollama_kimi` | Ollama Cloud Kimi K2.6，zero-data-retention，较便宜，适合隐私姿态要求高但无需最强模型的任务 |
 | `ollama_deepseek_pro` | Ollama Cloud DeepSeek V4 Pro，zero-data-retention，较贵，适合隐私姿态要求高且需要更强 DeepSeek Pro 的任务 |
+| `ds4` | 旧别名；新任务优先用 `private_ds4` |
 
 每个 subagent 的 prompt 应包含：
 - 具体负责的维度/范围
@@ -123,6 +142,20 @@ Subagent 的主要价值不是模拟人类团队，也不是把一个普通任�
 - 输出落盘路径（例如 `tmp/<session_slug>/tier3_independent.md`）
 - 验证标准：哪些证据算有效，哪些情况必须标注不确定
 
+### 2.2 文件优先的 Agent 交接
+
+主 Agent 与 subagent 之间默认通过 workspace 文件交换实质信息，而不是在 prompt 中复制大段 context，或依赖 subagent 最后一条消息承载完整结果。
+
+具体原则：
+
+1. **Prompt 传目标、边界和路径。** 告诉 subagent 要解决什么、验收标准是什么、应读取哪些文件；已有材料只要已经在 workspace，就传路径，不再粘贴全文。
+2. **Subagent 自己读取并迭代文件。** 让 subagent 从 source artifact、scratchpad、claim table 或代码中建立上下文。需要修改时写入自己的 namespaced 输出路径，不让多个 agent 同时覆盖 canonical 文件。
+3. **结果先落盘，再返回 manifest。** Subagent 的完整研究、判断、代码或审稿结果写入指定 artifact；最后一条消息只需返回路径、状态、关键结论和未解决问题，不能让聊天摘要成为唯一交付。
+4. **Parent 从 artifact 合并。** 主 Agent 读取 child artifacts、验证证据并统一写回 canonical output。Agent 间信息传递以可检查文件为准，不把前一个 agent 的自然语言总结直接当 source of truth。
+5. **为失败恢复保留边界。** 长任务按阶段更新 scratchpad、checkpoint 或部分输出。Subagent 中断后，后续 agent 应能从文件继续，而不是只能重跑整段 conversation。
+
+这种 file-first 交接有三个目的：减少 prompt 预处理和 context 复制；让 Agent 能在现有材料上反复读写；让中断、换模型和 parent 接管时仍有可审计的恢复点。只有结果极短、无 workspace 或纯一次性判断时，才允许直接在返回消息中完整交付。
+
 主线程责任：
 
 1. 设计任务分割和验收标准。
@@ -130,15 +163,31 @@ Subagent 的主要价值不是模拟人类团队，也不是把一个普通任�
 3. 处理冲突、补查关键来源、运行最终验证。
 4. 控制成本，避免把轻量任务变成多 agent 仪式。
 
+### 2.1 语言继承规则
+
+**subagent 默认继承用户当前对话语言。** 用户用中文，就用中文给 subagent 写 prompt，并要求它用中文输出；用户用英文，就用英文写 prompt，并要求它用英文输出。
+
+不要把语言留给 subagent 自己猜。很多模型会在没有明确约束时回到英文默认值，结果就会出现主线程是中文、后台结果是英文的错位。
+
+推荐做法：在每个 subagent prompt 里显式写一条语言要求，例如：
+
+- `LANGUAGE: 用中文思考与输出，除非引用原文标题或 API 名称`
+- `LANGUAGE: Respond in English. Keep source titles in their original language when needed`
+
+如果任务需要双语，必须明确写成双语交付，不要让 subagent 自行决定。
+
 ### 3. 等待与整合
 
 `multi_tool_use.parallel` 会在同一轮 tool response 中返回所有子任务结果；无需也不能调用 `background_output`。每个 `functions.task` 返回的 `task_id` 只用于后续需要恢复同一个 subagent 会话时使用，不是并行等待句柄。
 
 整合步骤：
 
-1. 读取每个 subagent 写入的 artifact 文件。
+1. 读取每个 subagent 写入的 artifact 文件；subagent 返回消息只作为 artifact manifest 和状态通知。
 2. 对重叠区域做交叉验证：多 agent 共同发现 → 可信度高；单一来源 → 标注待验证；矛盾信息 → 标注并分析原因。
 3. 把整合结果写入 session 目录，例如 `phase3_synthesis.md`、`fact_check.md`、`brainstorm_synthesis.md`。
+4. 如果 subagent 只在返回消息里总结，没有落盘，主线程应立即把关键结论落盘，避免证据链丢失。
+
+---
 
 ## 路由决策
 
@@ -153,7 +202,7 @@ Subagent 的主要价值不是模拟人类团队，也不是把一个普通任�
 
 不要在 prompt 里用旧的 `category="deep"`、`category="writing"`、`librarian`、`ultrabrain`、`glm51` 这类路由名。除非它们已经在当前 `opencode.json` 里被注册成同名 agent，否则 `task` 工具不能调用它们。
 
-不要为了“稳定”默认给 agent 配 `temperature: 0`。很多 provider/model 有自己的采样策略；DS4 还会对协议结构做 deterministic handling，但长文本 payload 强行确定性可能导致重复。默认不设置 temperature，让 provider/server 使用自己的默认值；只有明确知道某个模型需要固定采样时再配置。
+不要为了“稳定”默认给 agent 配 `temperature: 0`。很多 provider/model 有自己的采样策略；ds4 还会对协议结构做 deterministic handling，但长文本 payload 强行确定性可能导致重复。默认不设置 temperature，让 provider/server 使用自己的默认值；只有明确知道某个模型需要固定采样时再配置。
 
 ---
 
@@ -164,8 +213,8 @@ Subagent 的主要价值不是模拟人类团队，也不是把一个普通任�
 ```
 调研「某技术框架的采用情况」
 ├─ Agent 1（general）：官方叙事 + 产品定义
-├─ Agent 2（cheap_glm）：独立体验 + 社区反馈
-├─ Agent 3（reasoning_gpt）：失败边界 + 竞品对比
+├─ Agent 2（general）：独立使用体验 + 社区反馈
+├─ Agent 3（general）：失败边界 + 竞品对比
 └─ Overlap：社区和企业案例都有覆盖，可交叉验证
 ```
 
@@ -198,10 +247,43 @@ Subagent 的主要价值不是模拟人类团队，也不是把一个普通任�
 
 ---
 
+## 模型路由与指定模型
+
+当前工具 schema 只暴露 `task(subagent_type=...)`，不暴露 `category` 或 `load_skills`。不要把旧环境的 category 路由照搬到当前 OpenCode 工具调用里。
+
+当前可用 subagent 类型以系统工具说明为准。常见值：
+
+| subagent_type | 用途 |
+|---|---|
+| `general` | 通用研究、复杂问题拆解、外部资料调研、事实核查；通常继承主会话模型 |
+| `explore` | 快速探索代码库、搜索文件和符号、回答内部代码结构问题 |
+| `reasoning_gpt` | GPT 路线高可靠推理和工程判断 |
+| `writer_deepseek` | DeepSeek Pro 路线中文写作与改稿 |
+| `cheap_glm` | GLM 路线低成本初筛和轻量整理 |
+| `private_ds4` | 本地 ds4 路线，隐私敏感优先 |
+| `ollama_kimi` | Ollama Cloud Kimi K2.6，zero-data-retention、低成本 |
+| `ollama_deepseek_pro` | Ollama Cloud DeepSeek V4 Pro，zero-data-retention、高质量但更贵 |
+
+如果未来工具 schema 更新，以运行时 tool schema 为准，不要沿用过期的 `category` / `run_in_background` 写法。
+
+---
+
 ## 注意事项
 
 - **不要过度并行**：2-3 个精心设计的 subagent 通常优于 5 个松散的
 - **prompt 质量**：subagent 的 prompt 要足够具体，否则结果会很浅
 - **成本意识**：并行会消耗更多 token，评估是否值得
-- **中间结果**：默认不需要把每个 subagent 的原始输出都落盘；但 research / writing workflow 应把关键中间工件整理到 `tmp/<session_slug>/`
-- **旧写法禁用**：不要使用 `mcp_task(run_in_background=True)`、`background_output`、`category` 或 `load_skills`；当前工具 schema 只接受 `description`、`prompt`、`subagent_type`、`task_id`、`command`
+- **中间结果**：默认不需要把每个 subagent 的原始输出都落盘；但如果任务属于 research / writing workflow，主线程应把关键中间工件整理到 `tmp/<session_slug>/` 这类 session 目录中
+
+---
+
+## 常见错误
+
+| 错误 | 正确做法 | 说明 |
+|------|---------|------|
+| 逐个调用多个 `task`，但口头说“并行” | 用 `multi_tool_use.parallel` 在同一条消息中包多个 `functions.task` | 单独连续调用就是串行 |
+| 使用 `mcp_task(run_in_background=True)` | 使用 `multi_tool_use.parallel` + `functions.task` | 当前工具没有 `run_in_background` |
+| 等待 `background_output` 或系统 reminder | 直接读取 `multi_tool_use.parallel` 返回结果和 subagent 落盘文件 | 当前环境没有 background output 取结果流程 |
+| 编造 `subagent_type` | 只使用运行时 tool schema 中列出的 subagent 类型 | `subagent_type` 必须是已注册 agent 名 |
+| 传旧参数 `category` / `load_skills` | 按当前 `functions.task` schema 传 `description`、`prompt`、`subagent_type` | 旧参数不会被当前 task 工具接受 |
+| 用户用中文，但 subagent prompt 用英文默认模板 | prompt 里显式声明语言继承规则 | 否则 subagent 往往回落到英文输出 |

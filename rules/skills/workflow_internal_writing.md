@@ -1,76 +1,11 @@
 # 内部写作工作流
 
-## 元数据
+本文件已迁移到独立 public repo：[grapeot/writing-skill](https://github.com/grapeot/writing-skill)。
 
-- **类型**: Workflow
-- **适用场景**: 面向有共享上下文的读者：用户本人、内部协作者、AI Agent、项目工作流。覆盖调研 memo、决策 brief、工作记录、执行总结。
-- **创建日期**: 2026-06-11
-- **最后更新**: 2026-07-06
+完整内容见 `skills/workflow_internal_writing.md`（中文 canonical）：
 
----
+https://github.com/grapeot/writing-skill/blob/master/skills/workflow_internal_writing.md
 
-## 1. 何时使用
+英文版见 `skills_en/workflow_internal_writing.md`：
 
-加载条件：输出对象已共享上下文，目标是帮对方快速形成判断、复查证据、决定下一步。
-*   输出对象为无共享上下文的陌生读者、公开发布渠道、客户或外部课程受众时，使用 `workflow_external_writing.md`。
-
-内部文档的边际成本由于 AI 变得极低，但读者的注意力带宽仍是瓶颈。因此，形式设计的目标是：**降决策摩擦，让读者在同样时间内获取最多的 Actionable 判断。**
-
----
-
-## 2. 信息顺序与结构 (Bottom Line Up Front)
-
-最核心的决策和建议放最前面。不要按工作时间线罗列，也不要先铺垫大片背景。
-开头第一屏必须在 15 秒内让读者判断：是否值得继续看；如果值得，最该看哪一段。
-
-### 1. 恢复最小背景
-读者可能在多任务之间切换，脑中没有实时上下文。开头先用 1-2 句话恢复最小背景（这是什么项目、本轮工作在回答什么问题、为什么现在要看）。
-
-### 2. 结论卡片推荐结构
-```markdown
-## Bottom Line
-
-一句话结论。
-
-## Why This Matters
-
-这件事影响什么判断或动作。
-
-## Recommended Action
-
-建议做什么，或暂时不做什么。
-```
-
----
-
-## 3. 扫读优化 (Skimmability)
-
-*   **标题带决策信息**：不要写 `Findings` 或 `Notes`，写具体的结论或发现（例如：“WebView 只跑 bundle JS，sanitizer 过滤后执行”）。
-*   **段落简短，显式编号**：每段只解决一个判断点。当并列陈述多件事时，必须显式用 `第一……第二……` 编号（参见 `COMMUNICATION.md` 语言卫生）。
-*   **手机扫读适配**：默认按手机窄屏优化第一屏：短段落、窄表格，防止横向滚动。
-*   **中英混排**：内部文档默认全中文，不要在大段中文中夹带英文标题或表头。只保留必要的 API、代码和指标名。
-
----
-
-## 4. 可验证性 (Verifiability)
-
-内部文档的信任来自可核查。事实判断、代码行为或历史结论的旁边，必须**就地附带证据链接**。
-*   **证据形式**：inline link、文件路径（如 `file:line`）、命令、commit hash、日志/原始数据路径、原文摘录。
-*   **位置要求**：证据紧贴在它支撑的那句话旁边，不要全部堆到文末。
-
----
-
-## 5. 自适应阅读路径 (Adaptive Trajectory)
-
-不要预设读者会花 30 秒还是 30 分钟。同一份长文档应该同时满足扫读与审计两条路径：
-1.  **扫读层**：首屏一句话结论 + Takeaway + 状态卡。
-2.  **深读层**：详细论证、否决方案、长数据、实现细节。**默认使用 `<details>` 标签收起或锚定在文末。**
-
----
-
-## 6. 排版与视觉组件应用
-
-内部文档应主动使用视觉组件来降低读者的认知负担。
-*   需要具体的排版布局（如状态卡片网格、自适应表格、语义 Chip 标注、暗色模式兼容 CSS 等）时，必须加载并遵循 [内部文档排版与自适应视觉组件规范](./bestpractice_internal_visuals.md)。
-*   **图表生成**：优先使用 PNG/JPG/WebP 图片。**不使用内联 SVG**（以防移动端渲染不兼容）。
-*   **Mermaid** 只能作为辅助视图，不可承载唯一核心结论，且前后必须有 Markdown fallback。
+https://github.com/grapeot/writing-skill/blob/master/skills_en/workflow_internal_writing.md
