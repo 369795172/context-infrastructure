@@ -1,5 +1,13 @@
 # Working Log
 
+## 2026-10-19
+
+- Added `niview-skill` to the public ecosystem for NiView / Tencent IoT Video cameras: token exchange, device and event listing, `.encrypt` snapshot decryption, and low-power cloud event polling without P2P or camera wake-up.
+
+## 2026-08-16
+
+- Removed in-tree `ai_agent_cli_guide.md`, `antigravity_cli.md`, and `claude_code.md`. Those CLI contracts now live in [grapeot/ai-agent-cli-skill](https://github.com/grapeot/ai-agent-cli-skill). INDEX points at the public repo; SKILL_ECOSYSTEM lists it under Agent operations.
+
 ## 2026-08-05
 
 - Synced external/internal writing skills from private workspace: mandatory Round 4 CLI mechanical self-check (`external_prose_lint_cli`), genre-label writer lever, polarity diagnostics, updated internal concept-order hard rules. Stripped private paths/names; no secrets in CLI or skill text.
